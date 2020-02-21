@@ -1,4 +1,4 @@
-from app import app, jsonify, abort, request, db#, Image, transforms
+from app import app, jsonify, abort, request, db, inference#, Image, transforms
 from app.models import Student, House
 from base64 import b64decode
 from hashlib import md5
@@ -21,7 +21,6 @@ def get_student(student_id):
 def register_student():
     if not request.json:
         abort(400)
-
     StudentID = request.json['StudentID']
     StudentName = request.json['StudentName']
     HouseID = request.json['HouseID']
@@ -51,9 +50,11 @@ def make_prediction():
         filename = md5(img).hexdigest() + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M") + '.jpg'
         filepath = "/tmp/data/" + filename
 
-        print(filename)
+        prediction = inference.make_inference(img)
+
         with open('/tmp/test-out.jpg', 'wb') as f:
             f.write(img)
-        return jsonify({'prediction': 'cardboard'}), 200
+        return jsonify({'prediction': prediction}), 200
+
     else:
         abort(400)

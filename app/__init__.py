@@ -12,4 +12,8 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+from app import inference
+
+inference = inference.Inference('./weights.pth')
+
 from app import routes, models, db
