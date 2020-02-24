@@ -1,4 +1,6 @@
 from app import db
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 class Recycable(db.Model):
     id              =  db.Column(db.Integer, primary_key=True)
@@ -29,16 +31,22 @@ class House(db.Model):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class Student(db.Model):
-    # TODO:password
     id              =  db.Column(db.Integer, primary_key=True)
     StudentID       =  db.Column(db.String(64), index=True, unique=True, nullable=False)
     StudentName     =  db.Column(db.String(64), index=True, nullable=False)
     Email           =  db.Column(db.String(64), index=True, unique=True, nullable=False)
+
     HouseID         =  db.Column(db.Integer , db.ForeignKey('house.id'))
 
     BlueRecycled    =  db.Column(db.Integer)
     BrownRecycled   =  db.Column(db.Integer)
     OrangeRecycled  =  db.Column(db.Integer)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f'<Student {self.StudentID}:{self.StudentName}>'

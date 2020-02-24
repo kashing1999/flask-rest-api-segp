@@ -2,3 +2,10 @@ app.db
 app/__pycache__/
 app/__pycache__/*
 weights.pth
+data/
+data/*
+__pycache__/
+__pycache__/*
+.vscode/
+.vscode/*
+.DS_store/

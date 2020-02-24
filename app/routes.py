@@ -8,9 +8,9 @@ from datetime import datetime
 
 # Get student by student ID
 # TODO: get student by email?
-@app.route('/student/<string:student_id>', methods=['GET'])
-def get_student(student_id):
-    s = Student.query.filter(Student.StudentID == student_id)
+@app.route('/student/<string:StudentID>', methods=['GET'])
+def get_student(StudentID):
+    s = Student.query.filter(Student.StudentID == StudentID)
     if s != None:
         return jsonify(s[0].as_dict())
     abort(404)
@@ -24,12 +24,26 @@ def register_student():
     StudentID = request.json['StudentID']
     StudentName = request.json['StudentName']
     HouseID = request.json['HouseID']
+    email = request.json['Email']
     s = Student(StudentID=StudentID, StudentName=StudentName, HouseID=HouseID)
+    s.set_password(request.json['Password'])
 
     db.session.add(s)
     db.session.commit()
 
     return jsonify(s.as_dict()), 201
+
+
+# Student submits recycables
+@app.route('/recycle', methods=['POST'])
+def recycling():
+    if not request.json:
+        abort(400)
+    StudentID = request.json['StudentID']
+    HouseID = request.json['HouseID']
+    s = Student.query.filter(Student.StudentID == StudentID)
+    h = House.query.filter(House.HouseID == HouseID)
+    pass
 
 
 # Get house
@@ -41,18 +55,20 @@ def get_house(house_id):
     abort(404)
 
 
+# Make prediction
 @app.route('/predict', methods=['POST'])
 def make_prediction():
     if request.json != None and 'recycable_image' in request.json:
-        b64 = request.json['recycable_image']
-        img = b64decode(b64)
-
-        filename = md5(img).hexdigest() + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M") + '.jpg'
-        filepath = "/tmp/data/" + filename
+        img = b64decode(request.json['recycable_image'])
 
         prediction = inference.make_inference(img)
 
-        with open('/tmp/test-out.jpg', 'wb') as f:
+        # file format: prediction_md5sum_date_time.jpg
+        # TODO: when deploying the webapp, place data folder outside of web root directory to prevent remote code execution
+        filename = prediction + "_" + md5(img).hexdigest() + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M") + '.jpg'
+        filepath = "data/" + filename
+
+        with open(filepath, 'wb') as f:
             f.write(img)
         return jsonify({'prediction': prediction}), 200
 
