@@ -25,7 +25,8 @@ def register_student():
     StudentName = request.json['StudentName']
     HouseID = request.json['HouseID']
     email = request.json['Email']
-    s = Student(StudentID=StudentID, StudentName=StudentName, HouseID=HouseID)
+
+    s = Student(StudentID=StudentID, StudentName=StudentName, HouseID=HouseID, Email=email, BrownRecycled=0, BlueRecycled=0, OrangeRecycled=0)
     s.set_password(request.json['Password'])
 
     db.session.add(s)
