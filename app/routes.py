@@ -1,8 +1,10 @@
-from app import app, jsonify, abort, request, db, inference#, Image, transforms
+from app import app, jsonify, abort, request, inference#, Image, transforms
+from app.database import db
 from app.models import Student, House
 from base64 import b64decode
 from hashlib import md5
 from datetime import datetime
+from flask_jwt import jwt_required, current_identity
 
 # TODO: Session cookie
 
@@ -34,6 +36,10 @@ def register_student():
 
     return jsonify(s.as_dict()), 201
 
+@app.route('/protected')
+@jwt_required
+def protected():
+    return f'{current_identity}'
 
 # Student submits recycables
 @app.route('/recycle', methods=['POST'])

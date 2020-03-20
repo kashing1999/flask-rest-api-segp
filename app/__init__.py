@@ -1,7 +1,7 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from flask import jsonify, abort, request
+from flask_jwt import JWT
+from app.database import __init_db
 
 # import torchvision.transforms as transforms
 # from PIL import Image
@@ -9,11 +9,18 @@ from flask import jsonify, abort, request
 from config import Config
 app = Flask(__name__)
 app.config.from_object(Config)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 
+# DB
+__init_db(app)
+
+# JWT
+from app.auth import authenticate, identity
+
+app.secret_key = "test"
+jwt = JWT(app, authenticate, identity)
+
+# Rubbish Recognition
 from app import inference
-
 inference = inference.Inference('./weights.pth')
 
-from app import routes, models, db
+from app import routes, models
