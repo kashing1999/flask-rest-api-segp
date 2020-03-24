@@ -16,7 +16,6 @@ __init_db(app)
 # JWT
 from app.auth import authenticate, identity
 
-app.secret_key = "test"
 jwt = JWT(app, authenticate, identity)
 
 # Rubbish Recognition
