@@ -2,8 +2,9 @@ from app.models import Student
 
 def authenticate(username, password):
     user = Student.query.filter(Student.Email == username)
-    if user and user.first().check_password(password):
-        return user.first()
+    if user != None and user.first() != None:
+        if user.first().check_password(password):
+            return user.first()
 
 def identity(payload):
     user_id = payload['identity']

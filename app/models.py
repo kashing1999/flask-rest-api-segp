@@ -1,6 +1,7 @@
 from app.database import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
+import base64
 
 class Recycable(db.Model):
     id              =  db.Column(db.Integer, primary_key=True)
@@ -37,9 +38,11 @@ class Student(db.Model):
     id              =  db.Column(db.Integer, primary_key=True)
     StudentName     =  db.Column(db.String(64), index=True, nullable=False)
     Email           =  db.Column(db.String(64), index=True, unique=True, nullable=False)
-    password_hash   = db.Column(db.String(128))
+    password_hash   =  db.Column(db.String(128))
 
-    points    =  db.Column(db.Integer)
+    Avatar          =  db.Column(db.LargeBinary)
+
+    points          =  db.Column(db.Integer)
     HouseID         =  db.Column(db.Integer , db.ForeignKey('house.id'))
 
     BlueRecycled    =  db.Column(db.Integer)
@@ -58,4 +61,11 @@ class Student(db.Model):
         return f'<Student {self.id}:{self.StudentName}>'
 
     def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != "password_hash"}
+        s = {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != "password_hash" and c.name != "Avatar"}
+        avatar = getattr(sefl, 'Avatar')
+        if avatar != None:
+            s['Avatar'] = base64.b64encode(avatar).decode('UTF-8')
+        else:
+            s['Avatar'] = None
+
+        return s
