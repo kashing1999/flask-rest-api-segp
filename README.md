@@ -1,7 +1,3 @@
-# TODO:
-- Session logins (Flaks-JWT)
-- Passwords (done, not tested)
-
 # How to run
 - Install pip
 - Run `pipenv shell` to start a virtual env
