@@ -6,22 +6,26 @@ from hashlib import md5
 from datetime import datetime
 from flask_jwt import jwt_required, current_identity
 import socket
+import time
 
 
-recycable_classes = {
+recyclable_classes = {
     'Paper': 'Blue',
     'Glass': 'Brown',
-    'Plastic': 'Orange'
+    'Aluminium': 'Orange'
 }
 
 bin_code_numbers = {
-    'Blue': 1,
-    'Orange': 2,
-    'Brown': 3
+    'Blue': '1',
+    'Orange': '2',
+    'Brown': '3'
 }
 
 
+# TODO: Session cookie
+
 # Get student by student ID
+# TODO: get student by email?
 @app.route('/student', methods=['GET'])
 @jwt_required()
 def get_student():
@@ -100,14 +104,15 @@ def get_leaderboard():
     students = Student.query.order_by(Student.TotalRecycled).limit(10).all()
     leaderboard['Students'] = [s.as_dict() for s in students]
 
-    recycables = Recycable.query.order_by(Recycable.TotalRecycled).all()
-    leaderboard['Recycables'] = [r.as_dict() for r in recycables]
+    recyclables = Recycable.query.order_by(Recycable.TotalRecycled).all()
+    leaderboard['Recycables'] = [r.as_dict() for r in recyclables]
 
     return jsonify(leaderboard)
 
 
 # Make prediction
 @app.route('/predict', methods=['POST'])
+@jwt_required()
 def make_prediction():
     if request.json != None and 'recycable_image' in request.json:
         img = b64decode(request.json['recycable_image'])
@@ -116,7 +121,7 @@ def make_prediction():
 
         # file format: prediction_md5sum_date_time.jpg
         # TODO: when deploying the webapp, place data folder outside of web root directory to prevent remote code execution
-        filename = prediction + "_" + md5(img).hexdigest() + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M") + '.jpg'
+        filename = str(current_identity.id) + '_' + prediction + "_" + md5(img).hexdigest() + "_" + datetime.now().strftime("%Y-%m-%d_%H-%M") + '.jpg'
         filepath = "data/" + filename
 
         with open(filepath, 'wb') as f:
@@ -126,7 +131,7 @@ def make_prediction():
     else:
         abort(400)
 
-# Student submits recycables
+# Student submits recyclables
 @app.route('/recycle', methods=['POST'])
 @jwt_required()
 def recycling():
@@ -134,25 +139,29 @@ def recycling():
     if not request.json or s == None:
         abort(400)
 
-    if request.json['recycable']:
-        recycable = request.json['recycable']
+    print(request.json)
+    if request.json['recyclable']:
+        recyclable = request.json['recyclable']
 
-    bin_colour = recycable_classes[recycable]
+    bin_colour = recyclable_classes[recyclable]
 
     # Make request to server
     ## --------------------- ##
-
     HOST = '127.0.0.1'  # The server's hostname or IP address
     PORT = 5000        # The port used by the server
+    data = None
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
         bin_number = bin_code_numbers[bin_colour]
         sock.sendall( (bin_number.encode()))
-        data = s.recv(1024)
+        data = sock.recv(1024)
 
         print('Received', data.decode())
         sock.close()
+
+    if data.decode() == 'False':
+        abort(400)
 
     if bin_colour == "Blue":
         s.BlueRecycled += 1
@@ -162,7 +171,7 @@ def recycling():
         s.BrownRecycled += 1
 
     house_id = s.HouseID
-    house = House.query.filter(id == house_id).first()
+    house = House.query.filter(House.id == house_id).first()
     if house != None:
         if bin_colour == "Blue":
             house.BlueRecycled += 1
@@ -171,9 +180,10 @@ def recycling():
         if bin_colour == "Brown":
             house.BrownRecycled += 1
 
-    recycable = Recycable.query.filter(Recycable.Name==recycable).first()
-    recycable.TotalRecycled += 1
+    recyclable = Recycable.query.filter(Recycable.Name==recyclable).first()
+    recyclable.TotalRecycled += 1
 
     db.session.commit()
+    time.sleep(5)
 
     return jsonify({'status': 'submitted', 'points': 1}), 200

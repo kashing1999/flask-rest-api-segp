@@ -62,7 +62,7 @@ class Student(db.Model):
 
     def as_dict(self):
         s = {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != "password_hash" and c.name != "Avatar"}
-        avatar = getattr(sefl, 'Avatar')
+        avatar = getattr(self, 'Avatar')
         if avatar != None:
             s['Avatar'] = base64.b64encode(avatar).decode('UTF-8')
         else:
